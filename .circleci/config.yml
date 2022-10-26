@@ -1,0 +1,26 @@
+version: 2
+jobs:
+  deploy:
+    machine:
+      image: ubuntu-2004:202107-02
+    steps:
+      - checkout
+      - run:
+          name: Deploy to ECS
+          command: |
+            sudo apt update -y
+            sudo apt install awscli -y
+            # login to aws 
+            aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o2e6u6n6
+            # build image
+            docker build -t public.ecr.aws/o2e6u6n6/demo:1.0 .
+            # push to ecr
+            docker push public.ecr.aws/o2e6u6n6/demo:1.0
+            # update ecs service 
+            aws ecs update-service --cluster demo --service demo --force-new-deployment --region us-east-1
+workflows:
+  version: 2
+  deploy_api:
+    jobs:
+      - deploy
+            
